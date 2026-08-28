@@ -1,0 +1,33 @@
+{
+  "name": "pi-model-thinking-levels",
+  "version": "0.1.0",
+  "description": "A Pi extension that remembers the thinking level for each provider/model pair.",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension"
+  ],
+  "license": "MIT",
+  "files": [
+    "extensions",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test-coverage-exclude=extensions/** --test-coverage-exclude=test/** test/model-thinking-levels.test.js",
+    "test:integration": "node integration/rpc.js",
+    "smoke": "pi --no-extensions --extension ./extensions/model-thinking-levels.ts --list-models"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./extensions/model-thinking-levels.ts"
+    ]
+  }
+}
