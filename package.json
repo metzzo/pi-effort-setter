@@ -5,25 +5,45 @@
   "type": "module",
   "keywords": [
     "pi-package",
-    "pi-extension"
+    "pi-extension",
+    "thinking-level",
+    "reasoning-effort",
+    "model-preferences"
   ],
+  "author": "Robert Fischer",
   "license": "MIT",
   "files": [
     "extensions",
     "src",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
     "README.md",
+    "RELEASING.md",
+    "SECURITY.md",
     "LICENSE"
   ],
   "scripts": {
+    "check": "tsc --noEmit",
     "test": "node --test --experimental-test-coverage --test-coverage-lines=100 --test-coverage-functions=100 --test-coverage-branches=100 --test-coverage-exclude=extensions/** --test-coverage-exclude=test/** test/model-thinking-levels.test.js",
     "test:integration": "node integration/rpc.js",
-    "smoke": "pi --no-extensions --extension ./extensions/model-thinking-levels.ts --list-models"
+    "test:package": "node scripts/package-smoke.js",
+    "smoke": "pi --no-extensions --extension ./extensions/model-thinking-levels.ts --list-models",
+    "release:check": "npm run check && npm test && npm run test:package && npm audit --omit=dev --audit-level=high",
+    "prepublishOnly": "npm run release:check"
   },
   "engines": {
     "node": ">=22.19.0"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.84.2",
+    "@types/node": "^22.15.0",
+    "typescript": "^5.9.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "pi": {
     "extensions": [

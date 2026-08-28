@@ -25,19 +25,32 @@ The package keeps Pi's bundled extension API as a `"*"` peer dependency, as Pi's
 
 ## Install
 
-From this repository:
+Install the published package for the current user:
 
 ```bash
-pi install /absolute/path/to/pi-effort-setter
+pi install npm:pi-model-thinking-levels
 ```
 
-To try it for one Pi process without installing:
+Update or remove it with Pi's package manager:
+
+```bash
+pi update npm:pi-model-thinking-levels
+pi remove npm:pi-model-thinking-levels
+```
+
+For local development, install this checkout by path:
+
+```bash
+pi install /absolute/path/to/pi-model-thinking-levels
+```
+
+To try the checkout for one Pi process without installing:
 
 ```bash
 pi --extension ./extensions/model-thinking-levels.ts
 ```
 
-Pi packages and extensions execute with the user's full permissions. Review the source before installing it.
+Pi packages and extensions execute with the user's full permissions. Review the source and [security model](SECURITY.md) before installing. Removing the package does not delete saved preferences; remove the corresponding `model-thinking-levels/` directory under the configured Pi agent directory separately if those should also be erased.
 
 ## Behavior
 
@@ -97,12 +110,23 @@ Pi changes the active model and may clamp thinking before it emits `model_select
 
 The installed 0.84.2 documentation describes `model_select` with source `restore`, but no restore emission was found in that version's compiled implementation. Initialization therefore relies on `session_start`, not a restore event.
 
-## Development
+## Development (source checkout only)
 
-Run the deterministic filesystem and state-machine tests:
+Development files and tests are intentionally omitted from the runtime npm tarball. Clone the source repository before using these commands.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance and [RELEASING.md](RELEASING.md) for the release checklist.
+
+Run the TypeScript compatibility check and deterministic filesystem/state-machine tests:
 
 ```bash
+npm run check
 npm test
+```
+
+Build the npm tarball in a temporary workspace, install it as a consumer would, and load its declared extension through Pi's package APIs:
+
+```bash
+npm run test:package
 ```
 
 Run the real Pi RPC integration suite (uses the authenticated GPT-5.6 Sol and K3 providers from `~/.pi/agent/auth.json`, but copies credentials into a temporary agent directory):
@@ -120,3 +144,13 @@ PI_OFFLINE=1 npm run smoke
 ```
 
 The deterministic suite uses real temporary files and separate writer processes. It covers provider/model separation, persistence, atomic writes, concurrent independent updates, switch-time clamps, scoped preferences, malformed state, inherited-property model names, and validation. The separate RPC suite exercises the installed Pi 0.84.2 event wiring, learned restoration, cross-process startup restoration, and direct model selection with scoped pins without making an LLM request.
+
+Before publishing, run the deterministic release gate:
+
+```bash
+npm run release:check
+```
+
+## License
+
+[MIT](LICENSE)
