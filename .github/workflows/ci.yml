@@ -32,3 +32,9 @@ jobs:
 
       - name: Run release checks
         run: npm run release:check
+
+      - name: Smoke-test extension loading through the Pi CLI
+        run: npm run smoke
+        env:
+          PI_OFFLINE: "1"
+          PI_CODING_AGENT_DIR: ${{ runner.temp }}/pi-agent
