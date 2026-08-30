@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-08-28
-
 ### Added
 
 - Remember the effective thinking level independently for each provider/model pair.
@@ -17,5 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Guard against switch-time and stale thinking-level events.
 - Add deterministic tests, real Pi RPC integration coverage, and package-loading checks.
 
-[Unreleased]: https://github.com/metzzo/pi-effort-setter/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/metzzo/pi-effort-setter/releases/tag/v0.1.0
+### Fixed
+
+- Apply scoped-model pins even when preference persistence fails, and save only Pi's effective clamped value.
+- Reject model identities containing unpaired Unicode surrogates before path encoding.
+- Preserve duplicate-error suppression when switch-time thinking notifications are ignored.
+
+[Unreleased]: https://github.com/metzzo/pi-effort-setter/commits/main

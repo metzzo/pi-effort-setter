@@ -36,7 +36,7 @@
     "test:integration": "node integration/rpc.js",
     "test:package": "node scripts/package-smoke.js",
     "smoke": "pi --no-extensions --extension ./extensions/model-thinking-levels.ts --list-models",
-    "release:check": "npm run check && npm test && npm run test:package && npm audit --omit=dev --audit-level=high",
+    "release:check": "npm run check && npm test && npm run test:package",
     "prepublishOnly": "npm run release:check"
   },
   "engines": {

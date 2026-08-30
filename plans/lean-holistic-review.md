@@ -154,3 +154,23 @@ The runtime compatibility check proves the required 0.84.2 surface exists; it ca
 Current `npm run release:check` passed; full output is preserved at `.test-workspaces/holistic-review-release-check.log`. It includes TypeScript checking, the deterministic suite, packed-consumer Pi loading, and the configured audit gate.
 
 This review did not rerun the credentialed RPC integration, exercise a non-reasoning/custom model, force filesystem exhaustion/permission errors, create true overlapping Pi events, test Windows/macOS rename behavior, or interrupt child processes. The scoped-pin failure is verified by direct synchronous control-flow inspection, not by a newly added regression test.
+
+## Implementation follow-up and self-review
+
+The smallest high-value actions from this review were implemented immediately afterward:
+
+- Scoped pins now mark the model active, apply/clamp through Pi, and only then persist the effective value. A real Pi RPC case obstructs the state path and verifies that the live pin still takes effect while the error is reported.
+- Ignored interim thinking notifications no longer clear error-deduplication state.
+- Provider/model validation now rejects unpaired Unicode surrogates while accepting normal non-ASCII and emoji identities.
+- README and changelog now describe the actual pre-npm-release state.
+- The no-value runtime-only audit was removed from the release gate.
+
+Self-review found the implementation remains proportionate: no new dependency, abstraction, command, background process, state format, or runtime capability was added. The pin fix preserves active-model ordering before `pi.setThinkingLevel()`, persists on the equal-current pin path, and allows persistence errors to occur only after the runtime setting is effective. The obstructed-state integration case is isolated and cleaned before later cases.
+
+Final validation passed:
+
+- `npm run release:check` with 100% `src/` line/branch/function coverage and packed-consumer loading.
+- Authenticated no-request RPC integration for learned restore, startup restore, persistence-independent pins, and direct scoped pins.
+- Offline Pi extension-loading smoke test.
+
+Intentionally not implemented: provider-specific capability logic, a general process-timeout framework, static conversion of the small JavaScript core, corrupt-state quarantine, pruning/GC, fsync, or cross-process locks. The real non-reasoning/holey-map and true overlapping-event cases remain visible test gaps rather than reasons to add speculative architecture.

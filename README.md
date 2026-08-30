@@ -27,17 +27,23 @@ The package keeps Pi's bundled extension API as a `"*"` peer dependency, as Pi's
 
 ## Install
 
-Install the published package for the current user:
+Install the current package from GitHub for the current user:
+
+```bash
+pi install git:github.com/metzzo/pi-effort-setter
+```
+
+After the first npm release, the registry package can be installed with:
 
 ```bash
 pi install npm:pi-model-thinking-levels
 ```
 
-Update or remove it with Pi's package manager:
+Update installed packages or remove the GitHub package with Pi's package manager:
 
 ```bash
-pi update npm:pi-model-thinking-levels
-pi remove npm:pi-model-thinking-levels
+pi update --extensions
+pi remove git:github.com/metzzo/pi-effort-setter
 ```
 
 For local development, install this checkout by path:

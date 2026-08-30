@@ -70,10 +70,10 @@ export default function modelThinkingLevelsExtension(pi: ExtensionAPI) {
         restore: pinnedLevel === undefined,
       });
 
-      if (desiredLevel !== currentLevel) {
-        pi.setThinkingLevel(desiredLevel);
-        // Persist Pi's effective value in case model capabilities clamped a
-        // previously saved level and no change event was emitted.
+      if (desiredLevel !== currentLevel) pi.setThinkingLevel(desiredLevel);
+      if (pinnedLevel !== undefined || desiredLevel !== currentLevel) {
+        // Persist only Pi's effective value after capability clamping. A write
+        // failure must not prevent a scoped pin from taking effect at runtime.
         modelMemory.recordChange(model, pi.getThinkingLevel());
       }
       lastReportedError = undefined;
@@ -94,8 +94,9 @@ export default function modelThinkingLevelsExtension(pi: ExtensionAPI) {
       // so recordChange deliberately ignores that interim clamp. Comparing the
       // event with Pi's live value also ignores delayed events from other models.
       if (!checkCompatibility(ctx)) return;
-      ensureMemory().recordChange(ctx.model, event.level);
-      lastReportedError = undefined;
+      if (ensureMemory().recordChange(ctx.model, event.level)) {
+        lastReportedError = undefined;
+      }
     } catch (error) {
       reportError(error, ctx);
     }

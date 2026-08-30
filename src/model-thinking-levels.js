@@ -24,12 +24,29 @@ function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+function hasUnpairedSurrogate(value) {
+  for (let index = 0; index < value.length; index++) {
+    const code = value.charCodeAt(index);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = value.charCodeAt(index + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) return true;
+      index++;
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function assertModel(model) {
   if (!model || typeof model.provider !== "string" || model.provider.length === 0) {
     throw new Error("Model provider must be a non-empty string");
   }
   if (typeof model.id !== "string" || model.id.length === 0) {
     throw new Error("Model id must be a non-empty string");
+  }
+  if (hasUnpairedSurrogate(model.provider) || hasUnpairedSurrogate(model.id)) {
+    throw new Error("Model provider and id must not contain an unpaired Unicode surrogate");
   }
 }
 
@@ -133,10 +150,7 @@ export class ModelThinkingLevelMemory {
     const restore = options.restore ?? true;
     this.#activeModel = { provider: model.provider, id: model.id };
 
-    if (!restore) {
-      this.#store.set(model, currentLevel);
-      return currentLevel;
-    }
+    if (!restore) return currentLevel;
 
     const remembered = this.#store.get(model);
     if (remembered !== undefined) return remembered;

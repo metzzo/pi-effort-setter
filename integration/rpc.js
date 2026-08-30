@@ -8,6 +8,7 @@ import {
   readdirSync,
   readFileSync,
   rmSync,
+  writeFileSync,
 } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -121,11 +122,12 @@ class RpcProcess {
     });
   }
 
-  async close() {
+  async close(options = {}) {
     this.#child.stdin.end();
     const result = await this.#exit;
     assert.deepEqual(result, { code: 0, signal: null });
-    assert.equal(this.#stderr, "");
+    if (options.stderrPattern) assert.match(this.#stderr, options.stderrPattern);
+    else assert.equal(this.#stderr, "");
     assert.deepEqual(
       this.#events.filter((event) => event.type === "extension_error"),
       [],
@@ -173,6 +175,27 @@ async function startupRestoreCase(agentDir) {
     assert.equal(startup.data.thinkingLevel, levelA);
   } finally {
     await rpc.close();
+  }
+}
+
+async function persistenceFailureDoesNotBlockPinCase(agentDir) {
+  const statePath = join(agentDir, "model-thinking-levels");
+  rmSync(statePath, { recursive: true, force: true });
+  writeFileSync(statePath, "not a directory\n", "utf8");
+
+  const rpc = new RpcProcess(agentDir, [
+    "--model",
+    modelSpecification(modelA),
+    "--thinking",
+    "off",
+    "--models",
+    `${modelSpecification(modelA)}:${levelA}`,
+  ]);
+  try {
+    const state = await send(rpc, { id: "failed-persistence-pin", type: "get_state" });
+    assert.equal(state.data.thinkingLevel, levelA);
+  } finally {
+    await rpc.close({ stderrPattern: /\[model-thinking-levels\]/ });
   }
 }
 
@@ -227,13 +250,14 @@ try {
 
   await learnedPreferenceCase(temporaryAgentDir);
   await startupRestoreCase(temporaryAgentDir);
+  await persistenceFailureDoesNotBlockPinCase(temporaryAgentDir);
   await directScopedPinCase(temporaryAgentDir);
 
   const levels = readSavedLevels(temporaryAgentDir);
   assert.equal(levels.get(`${modelA.provider}\0${modelA.id}`), levelA);
   assert.equal(levels.get(`${modelB.provider}\0${modelB.id}`), levelB);
   console.log(
-    `Validated learned restore, startup restore, and direct scoped pins for ${modelSpecification(modelA)}=${levelA} and ${modelSpecification(modelB)}=${levelB}`,
+    `Validated learned restore, startup restore, persistence-independent scoped pins, and direct scoped pins for ${modelSpecification(modelA)}=${levelA} and ${modelSpecification(modelB)}=${levelB}`,
   );
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });

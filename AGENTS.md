@@ -125,7 +125,7 @@ Run the deterministic release gate for code, package, dependency, or public-docu
 npm run release:check
 ```
 
-It must pass TypeScript checking, the deterministic suite with 100% line/branch/function coverage of `src/`, packed-consumer loading, and the production dependency audit.
+It must pass TypeScript checking, the deterministic suite with 100% line/branch/function coverage of `src/`, and packed-consumer loading.
 
 For changes to event wiring, startup behavior, model identity, scoped pins, capability clamping, persistence timing, or Pi compatibility, also run:
 

@@ -140,12 +140,14 @@ test("an interim clamp for the next model does not overwrite its memory", () => 
   });
 });
 
-test("an explicit scoped-model level replaces the remembered level", () => {
+test("an explicit scoped-model level is not persisted before its effective value", () => {
   withTempStore(({ store }) => {
     const memory = new ModelThinkingLevelMemory(store);
 
     memory.activate(K3, "low");
     assert.equal(memory.activate(K3, "high", { restore: false }), "high");
+    assert.equal(store.get(K3), "low");
+    assert.equal(memory.recordChange(K3, "high"), true);
     assert.equal(store.get(K3), "high");
   });
 });
@@ -239,8 +241,14 @@ test("get propagates filesystem errors other than a missing file", () => {
 
 test("model and thinking-level inputs are validated", () => {
   withTempStore(({ store }) => {
+    const unicodeModel = { provider: "provider-🙂", id: "モデル" };
+    store.set(unicodeModel, "high");
+    assert.equal(store.get(unicodeModel), "high");
+
     assert.throws(() => store.get({ provider: "", id: "model" }), /provider/);
     assert.throws(() => store.get({ provider: "provider", id: "" }), /Model id/);
+    assert.throws(() => store.get({ provider: "provider-\ud800", id: "model" }), /surrogate/);
+    assert.throws(() => store.get({ provider: "provider", id: "model-\udfff" }), /surrogate/);
     assert.throws(() => store.set(SOL, "extreme"), /thinking level/);
   });
 });
