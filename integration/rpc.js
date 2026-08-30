@@ -25,6 +25,67 @@ const modelB = parseModel(process.env.PI_INTEGRATION_MODEL_B ?? "kimi-coding/k3"
 const levelA = process.env.PI_INTEGRATION_LEVEL_A ?? "xhigh";
 const levelB = process.env.PI_INTEGRATION_LEVEL_B ?? "high";
 
+// Custom capability-restricted models. The provider is never contacted: the
+// suite makes no LLM request.
+const noReasoningModel = { provider: "test-clamp", id: "no-reasoning" };
+const holeyModel = { provider: "test-clamp", id: "holey" };
+
+function customModelsConfiguration() {
+  const cost = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+  return {
+    providers: {
+      [noReasoningModel.provider]: {
+        baseUrl: "http://127.0.0.1:9/v1",
+        api: "openai-completions",
+        apiKey: "test",
+        models: [
+          {
+            id: noReasoningModel.id,
+            name: "No Reasoning",
+            reasoning: false,
+            input: ["text"],
+            contextWindow: 8192,
+            maxTokens: 1024,
+            cost,
+          },
+          {
+            id: holeyModel.id,
+            name: "Holey",
+            reasoning: true,
+            thinkingLevelMap: {
+              minimal: null,
+              low: null,
+              medium: null,
+              high: "high",
+              xhigh: null,
+              max: "max",
+            },
+            input: ["text"],
+            contextWindow: 8192,
+            maxTokens: 1024,
+            cost,
+          },
+        ],
+      },
+    },
+  };
+}
+
+function writeSavedLevel(agentDir, model, level) {
+  const path = join(
+    agentDir,
+    "model-thinking-levels",
+    Buffer.from(model.provider, "utf8").toString("hex"),
+    `${Buffer.from(model.id, "utf8").toString("hex")}.json`,
+  );
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(
+    path,
+    `${JSON.stringify({ version: 1, provider: model.provider, modelId: model.id, level }, null, 2)}\n`,
+    "utf8",
+  );
+}
+
 function parseModel(specification) {
   const separator = specification.indexOf("/");
   if (separator <= 0 || separator === specification.length - 1) {
@@ -228,6 +289,59 @@ async function directScopedPinCase(agentDir) {
   }
 }
 
+async function capabilityClampCase(agentDir) {
+  rmSync(join(agentDir, "model-thinking-levels"), { recursive: true, force: true });
+  writeSavedLevel(agentDir, noReasoningModel, "high");
+  writeSavedLevel(agentDir, holeyModel, "xhigh");
+
+  const rpc = new RpcProcess(agentDir, [
+    "--model",
+    modelSpecification(noReasoningModel),
+    "--thinking",
+    "high",
+  ]);
+  try {
+    // The saved high is restored, Pi clamps it to off for a non-reasoning
+    // model, and the extension must persist the clamped value.
+    const clampedOff = await send(rpc, { id: "clamped-off", type: "get_state" });
+    // Pi clamps holey maps upward first: saved xhigh becomes max.
+    await send(rpc, { id: "to-holey", type: "set_model", provider: holeyModel.provider, modelId: holeyModel.id });
+    const clampedMax = await send(rpc, { id: "clamped-max", type: "get_state" });
+
+    assert.equal(clampedOff.data.thinkingLevel, "off");
+    assert.equal(clampedMax.data.thinkingLevel, "max");
+  } finally {
+    await rpc.close();
+  }
+
+  const levels = readSavedLevels(agentDir);
+  assert.equal(levels.get(`${noReasoningModel.provider}\0${noReasoningModel.id}`), "off");
+  assert.equal(levels.get(`${holeyModel.provider}\0${holeyModel.id}`), "max");
+}
+
+async function clampedScopedPinCase(agentDir) {
+  rmSync(join(agentDir, "model-thinking-levels"), { recursive: true, force: true });
+  const rpc = new RpcProcess(agentDir, [
+    "--model",
+    modelSpecification(noReasoningModel),
+    "--thinking",
+    "off",
+    "--models",
+    `${modelSpecification(noReasoningModel)}:high`,
+  ]);
+  try {
+    // The pin asks for high on a non-reasoning model: the live level and the
+    // persisted value must both be the clamped off.
+    const state = await send(rpc, { id: "clamped-pin", type: "get_state" });
+    assert.equal(state.data.thinkingLevel, "off");
+  } finally {
+    await rpc.close();
+  }
+
+  const levels = readSavedLevels(agentDir);
+  assert.equal(levels.get(`${noReasoningModel.provider}\0${noReasoningModel.id}`), "off");
+}
+
 function readSavedLevels(agentDir) {
   const root = join(agentDir, "model-thinking-levels");
   const levels = new Map();
@@ -248,6 +362,14 @@ try {
     if (existsSync(source)) cpSync(source, join(temporaryAgentDir, name), { recursive: true });
   }
 
+  writeFileSync(
+    join(temporaryAgentDir, "models.json"),
+    `${JSON.stringify(customModelsConfiguration(), null, 2)}\n`,
+    "utf8",
+  );
+
+  await capabilityClampCase(temporaryAgentDir);
+  await clampedScopedPinCase(temporaryAgentDir);
   await learnedPreferenceCase(temporaryAgentDir);
   await startupRestoreCase(temporaryAgentDir);
   await persistenceFailureDoesNotBlockPinCase(temporaryAgentDir);
@@ -257,7 +379,7 @@ try {
   assert.equal(levels.get(`${modelA.provider}\0${modelA.id}`), levelA);
   assert.equal(levels.get(`${modelB.provider}\0${modelB.id}`), levelB);
   console.log(
-    `Validated learned restore, startup restore, persistence-independent scoped pins, and direct scoped pins for ${modelSpecification(modelA)}=${levelA} and ${modelSpecification(modelB)}=${levelB}`,
+    `Validated capability clamping, clamped scoped pins, learned restore, startup restore, persistence-independent scoped pins, and direct scoped pins for ${modelSpecification(modelA)}=${levelA} and ${modelSpecification(modelB)}=${levelB}`,
   );
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });
