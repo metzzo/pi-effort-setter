@@ -1,5 +1,11 @@
 # Holistic Code Review: pi-model-thinking-levels
 
+> **Trust note (added later):** maintainer policy accepts only reviews by gpt-5.6-sol
+> (high) or K3 (high). Of the six reviews below, only the **correctness** review meets
+> that bar; the other five angles were repeated independently on gpt-5.6-sol (high) and
+> integrated into `plans/perfection-plan.md`. Treat this document's non-correctness
+> sections as historical context, not accepted findings.
+
 Multi-angle review of the repository at commit `main` (working tree clean at review time).
 Six independent read-only reviewers each examined the full codebase from one angle;
 the main thread independently spot-verified the load-bearing claims against the code,
