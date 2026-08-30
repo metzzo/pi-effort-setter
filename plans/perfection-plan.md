@@ -1,7 +1,12 @@
 # Plan: pi-model-thinking-levels — fixes worth doing
 
-**Basis:** maintainer policy trusts only reviews by gpt-5.6-sol (high) or K3 (high).
-Integrated: the v1 correctness review (sol high), five independent v2 reviews (sol high:
+> **Status:** superseded in scope by `plans/lean-holistic-review.md`, whose smallest
+> action plan was implemented (pin ordering, truthful release docs, dedup reset,
+> surrogate validation, capability-clamp integration tests, audit-gate removal) and
+> verified by a gpt-5.6-sol-high fleet review. This document remains as the broader
+> findings record; items the lean review rejected stay rejected.
+
+**Basis:** maintainer policy trusts only reviews by gpt-5.6-sol (high) or K3 (high). Integrated: the v1 correctness review (sol high), five independent v2 reviews (sol high:
 overengineering, software engineering, AI/ML, agentic, Pi domain), and main-thread
 verification (K3 high). All other v1 reviews are discarded. This plan was then cut to
 only what is clearly justified — anything speculative, hypothetical-future, or heavier
