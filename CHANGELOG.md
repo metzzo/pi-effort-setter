@@ -16,3 +16,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Persist preferences as independent atomically replaced files.
 - Guard against switch-time and stale thinking-level events.
 - Add deterministic tests, real Pi RPC integration coverage, and package-loading checks.
+
+[Unreleased]: https://github.com/metzzo/pi-effort-setter/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/metzzo/pi-effort-setter/releases/tag/v0.1.0

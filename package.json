@@ -12,6 +12,14 @@
   ],
   "author": "Robert Fischer",
   "license": "MIT",
+  "homepage": "https://github.com/metzzo/pi-effort-setter#readme",
+  "bugs": {
+    "url": "https://github.com/metzzo/pi-effort-setter/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/metzzo/pi-effort-setter.git"
+  },
   "files": [
     "extensions",
     "src",

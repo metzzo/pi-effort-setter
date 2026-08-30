@@ -1,5 +1,7 @@
 # Pi model thinking levels
 
+[![CI](https://github.com/metzzo/pi-effort-setter/actions/workflows/ci.yml/badge.svg)](https://github.com/metzzo/pi-effort-setter/actions/workflows/ci.yml)
+
 A Pi extension that remembers a separate thinking level for every provider/model pair.
 
 For example:
@@ -41,7 +43,7 @@ pi remove npm:pi-model-thinking-levels
 For local development, install this checkout by path:
 
 ```bash
-pi install /absolute/path/to/pi-model-thinking-levels
+pi install /absolute/path/to/pi-effort-setter
 ```
 
 To try the checkout for one Pi process without installing:
