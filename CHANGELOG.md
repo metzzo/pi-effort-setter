@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Validate development, RPC integration, and packed loading on Pi 0.87.1; retain the wildcard host peer and capability-based startup check without an upper version bound.
+
 - Apply scoped-model pins even when preference persistence fails, and save only Pi's effective clamped value.
 - Reject model identities containing unpaired Unicode surrogates before path encoding.
 - Preserve duplicate-error suppression when switch-time thinking notifications are ignored.

@@ -20,7 +20,7 @@ Preferences are global across Pi projects and sessions. They are stored as one J
 
 ## Requirements
 
-- Pi 0.84.2 or newer
+- Pi 0.84.2 or newer; tested on 0.87.1, with no upper version bound
 - Node.js 22.19.0 or newer
 
 The package keeps Pi's bundled extension API as a `"*"` peer dependency, as Pi's package documentation recommends. A runtime compatibility check disables the extension with an error on older Pi contexts that do not expose `ctx.scopedModels`.
@@ -151,7 +151,7 @@ Run a no-request Pi loading smoke test:
 PI_OFFLINE=1 npm run smoke
 ```
 
-The deterministic suite uses real temporary files and separate writer processes. It covers provider/model separation, persistence, atomic writes, concurrent independent updates, switch-time clamps, scoped preferences, malformed state, inherited-property model names, and validation. The separate RPC suite exercises the installed Pi 0.84.2 event wiring, learned restoration, cross-process startup restoration, and direct model selection with scoped pins without making an LLM request.
+The deterministic suite uses real temporary files and separate writer processes. It covers provider/model separation, persistence, atomic writes, concurrent independent updates, switch-time clamps, scoped preferences, malformed state, inherited-property model names, and validation. The separate RPC suite exercises the installed Pi 0.87.1 event wiring, learned restoration, cross-process startup restoration, and direct model selection with scoped pins without making an LLM request.
 
 Before publishing, run the deterministic release gate:
 

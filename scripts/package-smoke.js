@@ -66,7 +66,7 @@ try {
   const tarball = join(packDirectory, packResult.filename);
   await run(
     "npm",
-    ["install", "--ignore-scripts", "--no-package-lock", tarball, "@earendil-works/pi-coding-agent@0.84.2"],
+    ["install", "--ignore-scripts", "--no-package-lock", tarball, "@earendil-works/pi-coding-agent@0.87.1"],
     consumerDirectory,
   );
 

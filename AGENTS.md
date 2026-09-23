@@ -23,7 +23,7 @@ Optimize for correctness, compatibility with Pi's public extension API, simple i
 - `extensions/model-thinking-levels.ts` — thin Pi API adapter and event wiring.
 - `src/model-thinking-levels.js` — provider/model memory and filesystem persistence; keep this independent of Pi so it remains deterministic to test.
 - `test/model-thinking-levels.test.js` — state-machine, validation, persistence, atomicity, and multi-process tests.
-- `integration/rpc.js` — real Pi 0.84.2 RPC integration without an LLM request.
+- `integration/rpc.js` — real Pi 0.87.1 RPC integration without an LLM request.
 - `scripts/package-smoke.js` — builds the actual npm tarball, installs it in a temporary consumer, resolves the Pi package manifest, and loads the packed extension.
 - `package.json`, `package-lock.json`, `tsconfig.json` — public package contract, pinned development graph, scripts, and TypeScript boundary.
 - `README.md` — user behavior, limitations, installation, and design research.
@@ -71,7 +71,7 @@ Treat these as contracts. Do not weaken them accidentally.
 
 - Startup restoration intentionally lets an existing learned value beat an ordinary `--thinking` argument because Pi's public context does not expose the source of the startup value.
 - Scoped pins remain detectable and beat learned startup memory. Only entries in `ctx.scopedModels` are scoped pins; a `--model provider/model:level` startup shorthand is otherwise just part of the startup effective level.
-- The minimum supported Pi version is 0.84.2. Keep the README requirement, runtime guard, pinned development dependency, and lockfile aligned if this changes.
+- The minimum required Pi API is from 0.84.2; startup checks capabilities, not version numbers. Development and packed-load tests pin 0.87.1 for reproducibility only. Keep those test baselines and the lockfile aligned without adding an upper host version bound.
 - Keep Pi's bundled core package as a `"*"` peer dependency, as Pi's package documentation requires.
 
 ### Security and privacy
