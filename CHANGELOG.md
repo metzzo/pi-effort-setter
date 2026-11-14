@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
-- Validate development, RPC integration, and packed loading on Pi 0.87.1; retain the wildcard host peer and capability-based startup check without an upper version bound.
+- Validate type checking, RPC integration, packed loading, and real installed-package smoke sessions on Pi 0.87.1 and 1.5.2; pin development dependencies to 1.5.2 while retaining the wildcard host peer and capability-based startup check without an upper version bound.
+- Make packed-consumer tests follow the installed development Pi version instead of always testing 0.87.1; cover repeated scoped cycling and explicit `off` pins through real Pi RPC.
 
 - Apply scoped-model pins even when preference persistence fails, and save only Pi's effective clamped value.
 - Reject model identities containing unpaired Unicode surrogates before path encoding.

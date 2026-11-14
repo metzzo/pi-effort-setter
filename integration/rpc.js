@@ -20,7 +20,7 @@ const sourceAgentDir = resolve(
   process.env.PI_INTEGRATION_SOURCE_AGENT_DIR ?? join(homedir(), ".pi", "agent"),
 );
 const piExecutable = process.env.PI_INTEGRATION_EXECUTABLE ?? "pi";
-const modelA = parseModel(process.env.PI_INTEGRATION_MODEL_A ?? "openai-codex/gpt-5.6-sol");
+const modelA = parseModel(process.env.PI_INTEGRATION_MODEL_A ?? "openai-codex/gpt-6.1-sol");
 const modelB = parseModel(process.env.PI_INTEGRATION_MODEL_B ?? "kimi-coding/k3");
 const levelA = process.env.PI_INTEGRATION_LEVEL_A ?? "xhigh";
 const levelB = process.env.PI_INTEGRATION_LEVEL_B ?? "high";
@@ -239,6 +239,33 @@ async function startupRestoreCase(agentDir) {
   }
 }
 
+async function scopedCycleCase(agentDir) {
+  const rpc = new RpcProcess(agentDir, [
+    "--model",
+    modelSpecification(modelA),
+    "--thinking",
+    "off",
+    "--models",
+    `${modelSpecification(modelA)},${modelSpecification(modelB)}`,
+  ]);
+  try {
+    for (let index = 0; index < 8; index++) {
+      const expectedModel = index % 2 === 0 ? modelB : modelA;
+      const expectedLevel = index % 2 === 0 ? levelB : levelA;
+      const cycled = await send(rpc, { id: `cycle-${index}`, type: "cycle_model" });
+      assert.equal(cycled.data.model.provider, expectedModel.provider);
+      assert.equal(cycled.data.model.id, expectedModel.id);
+      assert.equal(cycled.data.thinkingLevel, expectedLevel);
+      assert.equal(cycled.data.isScoped, true);
+      const levels = readSavedLevels(agentDir);
+      assert.equal(levels.get(`${modelA.provider}\0${modelA.id}`), levelA);
+      assert.equal(levels.get(`${modelB.provider}\0${modelB.id}`), levelB);
+    }
+  } finally {
+    await rpc.close();
+  }
+}
+
 async function persistenceFailureDoesNotBlockPinCase(agentDir) {
   const statePath = join(agentDir, "model-thinking-levels");
   rmSync(statePath, { recursive: true, force: true });
@@ -342,6 +369,38 @@ async function clampedScopedPinCase(agentDir) {
   assert.equal(levels.get(`${noReasoningModel.provider}\0${noReasoningModel.id}`), "off");
 }
 
+async function offScopedPinCase(agentDir) {
+  rmSync(join(agentDir, "model-thinking-levels"), { recursive: true, force: true });
+  writeSavedLevel(agentDir, holeyModel, "max");
+  const rpc = new RpcProcess(agentDir, [
+    "--model",
+    modelSpecification(holeyModel),
+    "--thinking",
+    "high",
+    "--models",
+    `${modelSpecification(holeyModel)}:off,${modelSpecification(noReasoningModel)}`,
+  ]);
+  try {
+    // An off pin must beat learned max on startup and every switch.
+    const startup = await send(rpc, { id: "off-startup", type: "get_state" });
+    assert.equal(startup.data.thinkingLevel, "off");
+    assert.equal(readSavedLevels(agentDir).get(`${holeyModel.provider}\0${holeyModel.id}`), "off");
+    await send(rpc, { id: "learn-max", type: "set_thinking_level", level: "max" });
+    assert.equal(readSavedLevels(agentDir).get(`${holeyModel.provider}\0${holeyModel.id}`), "max");
+    await send(rpc, { id: "leave-off", type: "set_model", provider: noReasoningModel.provider, modelId: noReasoningModel.id });
+    await send(rpc, { id: "return-off", type: "set_model", provider: holeyModel.provider, modelId: holeyModel.id });
+    const direct = await send(rpc, { id: "direct-off", type: "get_state" });
+    assert.equal(direct.data.thinkingLevel, "off");
+    await send(rpc, { id: "cycle-away", type: "cycle_model" });
+    const cycled = await send(rpc, { id: "cycle-off", type: "cycle_model" });
+    assert.equal(cycled.data.model.id, holeyModel.id);
+    assert.equal(cycled.data.thinkingLevel, "off");
+    assert.equal(readSavedLevels(agentDir).get(`${holeyModel.provider}\0${holeyModel.id}`), "off");
+  } finally {
+    await rpc.close();
+  }
+}
+
 function readSavedLevels(agentDir) {
   const root = join(agentDir, "model-thinking-levels");
   const levels = new Map();
@@ -370,8 +429,10 @@ try {
 
   await capabilityClampCase(temporaryAgentDir);
   await clampedScopedPinCase(temporaryAgentDir);
+  await offScopedPinCase(temporaryAgentDir);
   await learnedPreferenceCase(temporaryAgentDir);
   await startupRestoreCase(temporaryAgentDir);
+  await scopedCycleCase(temporaryAgentDir);
   await persistenceFailureDoesNotBlockPinCase(temporaryAgentDir);
   await directScopedPinCase(temporaryAgentDir);
 
@@ -379,7 +440,7 @@ try {
   assert.equal(levels.get(`${modelA.provider}\0${modelA.id}`), levelA);
   assert.equal(levels.get(`${modelB.provider}\0${modelB.id}`), levelB);
   console.log(
-    `Validated capability clamping, clamped scoped pins, learned restore, startup restore, persistence-independent scoped pins, and direct scoped pins for ${modelSpecification(modelA)}=${levelA} and ${modelSpecification(modelB)}=${levelB}`,
+    `Validated capability clamping, clamped/off scoped pins, learned restore, startup restore, repeated scoped cycling, persistence-independent scoped pins, and direct scoped pins for ${modelSpecification(modelA)}=${levelA} and ${modelSpecification(modelB)}=${levelB}`,
   );
 } finally {
   rmSync(temporaryRoot, { recursive: true, force: true });
