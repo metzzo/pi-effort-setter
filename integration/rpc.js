@@ -240,6 +240,8 @@ async function startupRestoreCase(agentDir) {
 }
 
 async function scopedCycleCase(agentDir) {
+  writeSavedLevel(agentDir, modelA, levelA);
+  writeSavedLevel(agentDir, modelB, levelB);
   const rpc = new RpcProcess(agentDir, [
     "--model",
     modelSpecification(modelA),
@@ -427,12 +429,13 @@ try {
     "utf8",
   );
 
+  // Run first so earlier cases cannot supply the learned cycling preferences.
+  await scopedCycleCase(temporaryAgentDir);
   await capabilityClampCase(temporaryAgentDir);
   await clampedScopedPinCase(temporaryAgentDir);
   await offScopedPinCase(temporaryAgentDir);
   await learnedPreferenceCase(temporaryAgentDir);
   await startupRestoreCase(temporaryAgentDir);
-  await scopedCycleCase(temporaryAgentDir);
   await persistenceFailureDoesNotBlockPinCase(temporaryAgentDir);
   await directScopedPinCase(temporaryAgentDir);
 
