@@ -63,10 +63,14 @@ try {
     throw new Error(`packed files did not match the public package contract: ${packedFiles.join(", ")}`);
   }
 
+  // Exercise the same host as check/integration, including --no-save compatibility runs.
+  const { version: piVersion } = JSON.parse(
+    await readFile(join(root, "node_modules", "@earendil-works", "pi-coding-agent", "package.json"), "utf8"),
+  );
   const tarball = join(packDirectory, packResult.filename);
   await run(
     "npm",
-    ["install", "--ignore-scripts", "--no-package-lock", tarball, "@earendil-works/pi-coding-agent@0.87.1"],
+    ["install", "--ignore-scripts", "--no-package-lock", tarball, `@earendil-works/pi-coding-agent@${piVersion}`],
     consumerDirectory,
   );
 
@@ -86,6 +90,10 @@ try {
   }
 
   const piRoot = join(consumerDirectory, "node_modules", "@earendil-works", "pi-coding-agent");
+  const consumerPi = JSON.parse(await readFile(join(piRoot, "package.json"), "utf8"));
+  if (consumerPi.version !== piVersion) {
+    throw new Error(`consumer Pi version ${consumerPi.version} did not match development Pi ${piVersion}`);
+  }
   const pi = await import(pathToFileURL(join(piRoot, "dist", "index.js")).href);
   const { loadExtensions } = await import(
     pathToFileURL(join(piRoot, "dist", "core", "extensions", "loader.js")).href
@@ -129,7 +137,7 @@ try {
     throw new Error(`Pi loaded ${loaded.extensions.length} extensions instead of one`);
   }
 
-  process.stdout.write(`Package smoke passed: ${packResult.name}@${packResult.version}\n`);
+  process.stdout.write(`Package smoke passed: ${packResult.name}@${packResult.version} on Pi ${piVersion}\n`);
 } finally {
   if (process.env.PI_PACKAGE_SMOKE_KEEP !== "1") {
     await rm(workspace, { recursive: true, force: true });

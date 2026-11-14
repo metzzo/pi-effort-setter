@@ -20,7 +20,7 @@ Preferences are global across Pi projects and sessions. They are stored as one J
 
 ## Requirements
 
-- Pi 0.84.2 or newer; tested on 0.87.1, with no upper version bound
+- Pi 0.84.2 or newer; tested on pi 0.87.1 and 1.5.2, with no upper version bound
 - Node.js 22.19.0 or newer
 
 The package keeps Pi's bundled extension API as a `"*"` peer dependency, as Pi's package documentation recommends. A runtime compatibility check disables the extension with an error on older Pi contexts that do not expose `ctx.scopedModels`.
@@ -131,13 +131,13 @@ npm run check
 npm test
 ```
 
-Build the npm tarball in a temporary workspace, install it as a consumer would, and load its declared extension through Pi's package APIs:
+Build the npm tarball in a temporary workspace, install it as a consumer would, and load its declared extension through Pi's package APIs using the currently installed development Pi version:
 
 ```bash
 npm run test:package
 ```
 
-Run the real Pi RPC integration suite (uses the authenticated GPT-5.6 Sol and K3 providers from `~/.pi/agent/auth.json`, but copies credentials into a temporary agent directory):
+Run the real Pi RPC integration suite (uses the authenticated GPT-6.1 Sol and K3 providers from `~/.pi/agent/auth.json`, but copies credentials into a temporary agent directory):
 
 ```bash
 npm run test:integration
@@ -151,7 +151,19 @@ Run a no-request Pi loading smoke test:
 PI_OFFLINE=1 npm run smoke
 ```
 
-The deterministic suite uses real temporary files and separate writer processes. It covers provider/model separation, persistence, atomic writes, concurrent independent updates, switch-time clamps, scoped preferences, malformed state, inherited-property model names, and validation. The separate RPC suite exercises the installed Pi 0.87.1 event wiring, learned restoration, cross-process startup restoration, and direct model selection with scoped pins without making an LLM request.
+The deterministic suite uses real temporary files and separate writer processes. It covers provider/model separation, persistence, atomic writes, concurrent independent updates, switch-time clamps, scoped preferences, malformed state, inherited-property model names, and validation. The separate RPC suite exercises the installed Pi's event wiring, learned restoration, cross-process startup restoration, repeated scoped model cycling, direct model selection, off pins, and capability clamping without making an LLM request. Both suites and packed loading have been tested on Pi 0.87.1 and 1.5.2; real installed-package smoke sessions also verified model switching, persistence, startup restoration, scoped pins, and a low-thinking GPT-6.1 Sol request on both binaries.
+
+Development dependencies are pinned to Pi 1.5.2. To check the older host without changing the manifest or lockfile, temporarily install it, run the same checks, then restore the locked graph:
+
+```bash
+npm install --no-save --package-lock=false @earendil-works/pi-coding-agent@0.87.1
+npm run release:check
+npm run test:integration
+PI_OFFLINE=1 npm run smoke
+npm ci
+```
+
+Use an isolated `PI_CODING_AGENT_DIR` for smoke runs and set `PI_INTEGRATION_SOURCE_AGENT_DIR` to the intended test credential source. Packed loading follows the installed version, including the temporary 0.87.1 install.
 
 Before publishing, run the deterministic release gate:
 
